@@ -1,0 +1,16 @@
+package co.edu.uco.kudos.dominio.modelo;
+
+/**
+ * Acciones auditadas en la línea base (docs/07 §3).
+ */
+public enum AccionAuditoria {
+    LOGIN_EXITOSO,
+    LOGIN_FALLIDO,
+    KUDO_PUBLICADO,
+    NOTIFICACION_CORREO_ENVIADA,
+    NOTIFICACION_CORREO_FALLIDA,
+    NOTIFICACION_WHATSAPP_ENVIADA,
+    NOTIFICACION_WHATSAPP_FALLIDA,
+    NOTIFICACION_PUSH_ENVIADA,
+    NOTIFICACION_PUSH_OMITIDA_DESCONECTADO
+}
