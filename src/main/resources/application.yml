@@ -11,6 +11,22 @@ spring:
     placeholders:
       seed_dest_correo: ${SEED_DEST_CORREO:destinatario@example.com}
       seed_dest_celular: ${SEED_DEST_CELULAR:+570000000003}
+  servlet:
+    multipart:
+      # Límite técnico de la petición; el caso de uso además valida 5 MB por archivo y 5 archivos
+      max-file-size: 5MB
+      max-request-size: 26MB
+
+kudos:
+  jwt:
+    secreto: ${JWT_SECRET}
+    minutos-vigencia: 60
+  cors:
+    origen-permitido: ${CORS_ALLOWED_ORIGIN:http://localhost:5173}
+  supabase:
+    url: ${SUPABASE_URL}
+    clave-servicio: ${SUPABASE_SERVICE_KEY}
+    bucket: ${SUPABASE_BUCKET:kudos-adjuntos}
 
 server:
   port: ${PORT:8080}
