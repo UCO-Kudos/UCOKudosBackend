@@ -38,8 +38,9 @@ Controller → `PublicarKudoUseCase.publicar(PublicarKudoCommand)` → `Publicar
 `NotificacionesKudoListener` (`@TransactionalEventListener(AFTER_COMMIT)` + `@Async` con ejecutor propio) → `NotificarKudoPublicadoUseCase` → `NotificarKudoPublicadoService`: tres canales **independientes** (`EmailSenderPort`, `WhatsAppSenderPort`, `PushNotifierPort`); cada resultado se guarda en `notificacion` y en `auditoria` (`NOTIFICACION_CORREO_ENVIADA|_FALLIDA`, `NOTIFICACION_WHATSAPP_ENVIADA|_FALLIDA`, `NOTIFICACION_PUSH_ENVIADA|_OMITIDA_DESCONECTADO`). La falla de un canal **no** deshace el Kudo ni afecta a los demás. Todo con el mismo `trace_id` (filtro que lo crea, lo pone en MDC y lo devuelve en respuestas/errores).
 
 ## Seguridad y secretos
-- **Nunca** pongas secretos en el código, logs ni commits. Todo por variables de entorno (ver `.env.example`): `DB_URL, DB_USER, DB_PASSWORD, JWT_SECRET, SUPABASE_URL, SUPABASE_SERVICE_KEY, SUPABASE_BUCKET, BREVO_API_KEY, MAIL_FROM, TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_WHATSAPP_FROM, CORS_ALLOWED_ORIGIN, SEED_DEST_CORREO, SEED_DEST_CELULAR`.
-- Flyway placeholders: `spring.flyway.placeholders.seed_dest_correo=${SEED_DEST_CORREO:destinatario@example.com}` (y `seed_dest_celular`).
+- **Nunca** pongas secretos en el código, logs ni commits. Todo por variables de entorno (ver `.env.example`): `DB_URL, DB_USER, DB_PASSWORD, JWT_SECRET, SUPABASE_URL, SUPABASE_SERVICE_KEY, SUPABASE_BUCKET, BREVO_API_KEY, MAIL_FROM, TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_WHATSAPP_FROM, CORS_ALLOWED_ORIGIN, DOMINIO_INSTITUCIONAL, SEED_DEST_CORREO, SEED_DEST_CELULAR`.
+- Correo institucional: el correo de toda Persona termina en `@${DOMINIO_INSTITUCIONAL:uco.net.co}` (`DominioInstitucional` en el dominio); el login rechaza otros dominios con "Credenciales inválidas" y lo audita.
+- Flyway placeholders: `spring.flyway.placeholders.seed_dest_correo=${SEED_DEST_CORREO:destinatario@uco.net.co}` (y `seed_dest_celular`).
 - Errores como `application/problem+json` con `traceId`; sin trazas de pila hacia el cliente. Adjuntos: validar tipo (pdf/png/jpg) y tamaño; bucket privado; URLs firmadas.
 - `server.port=${PORT:8080}`; `server.shutdown=graceful`; logs en JSON a stdout.
 

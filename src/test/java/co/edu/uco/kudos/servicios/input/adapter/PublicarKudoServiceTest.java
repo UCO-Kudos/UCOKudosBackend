@@ -157,7 +157,7 @@ class PublicarKudoServiceTest {
     }
 
     private static Persona persona() {
-        return new Persona(UUID.randomUUID(), "Nombre", "Apellido", "correo@uco.edu.co", "+570000000000",
+        return new Persona(UUID.randomUUID(), "Nombre", "Apellido", "correo@uco.net.co", "+570000000000",
                 EstadoCuenta.ACTIVA, Rol.ESTUDIANTE);
     }
 }

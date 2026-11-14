@@ -26,8 +26,8 @@ class BrevoEmailSenderAdapterTest {
     @Test
     void enviaElCorreoConLaApiKeyEnLaCabeceraYJson() {
         try (ServidorHttpFalso brevo = new ServidorHttpFalso(201)) {
-            int intentos = adaptador(brevo.url(), "clave-prueba", "kudos@uco.edu.co")
-                    .enviar("luis@uco.edu.co", "Recibiste un Kudo", "Hola Luis");
+            int intentos = adaptador(brevo.url(), "clave-prueba", "kudos@uco.net.co")
+                    .enviar("luis@uco.net.co", "Recibiste un Kudo", "Hola Luis");
 
             assertEquals(1, intentos);
             ServidorHttpFalso.Peticion peticion = brevo.peticiones().getFirst();
@@ -35,18 +35,18 @@ class BrevoEmailSenderAdapterTest {
             assertEquals("/v3/smtp/email", peticion.ruta());
             assertEquals("clave-prueba", peticion.apiKey());
             assertTrue(peticion.contentType().startsWith("application/json"));
-            assertTrue(peticion.cuerpo().contains("\"to\":[{\"email\":\"luis@uco.edu.co\"}]"), peticion.cuerpo());
-            assertTrue(peticion.cuerpo().contains("\"email\":\"kudos@uco.edu.co\""), peticion.cuerpo());
+            assertTrue(peticion.cuerpo().contains("\"to\":[{\"email\":\"luis@uco.net.co\"}]"), peticion.cuerpo());
+            assertTrue(peticion.cuerpo().contains("\"email\":\"kudos@uco.net.co\""), peticion.cuerpo());
         }
     }
 
     @Test
     void reintentaLosErrores5xxHastaTresVecesYLuegoFalla() {
         try (ServidorHttpFalso brevo = new ServidorHttpFalso(503)) {
-            BrevoEmailSenderAdapter adaptador = adaptador(brevo.url(), "clave-prueba", "kudos@uco.edu.co");
+            BrevoEmailSenderAdapter adaptador = adaptador(brevo.url(), "clave-prueba", "kudos@uco.net.co");
 
             EnvioFallidoException error = assertThrows(EnvioFallidoException.class,
-                    () -> adaptador.enviar("luis@uco.edu.co", "Asunto", "Cuerpo"));
+                    () -> adaptador.enviar("luis@uco.net.co", "Asunto", "Cuerpo"));
 
             assertEquals(3, error.intentos());
             assertEquals(3, brevo.peticiones().size());
@@ -57,8 +57,8 @@ class BrevoEmailSenderAdapterTest {
     @Test
     void siSeRecuperaEnElSegundoIntentoQuedaEnviadoConDosIntentos() {
         try (ServidorHttpFalso brevo = new ServidorHttpFalso(500, 201)) {
-            int intentos = adaptador(brevo.url(), "clave-prueba", "kudos@uco.edu.co")
-                    .enviar("luis@uco.edu.co", "Asunto", "Cuerpo");
+            int intentos = adaptador(brevo.url(), "clave-prueba", "kudos@uco.net.co")
+                    .enviar("luis@uco.net.co", "Asunto", "Cuerpo");
 
             assertEquals(2, intentos);
         }
@@ -67,10 +67,10 @@ class BrevoEmailSenderAdapterTest {
     @Test
     void unError4xxNoSeReintenta() {
         try (ServidorHttpFalso brevo = new ServidorHttpFalso(401)) {
-            BrevoEmailSenderAdapter adaptador = adaptador(brevo.url(), "clave-mala", "kudos@uco.edu.co");
+            BrevoEmailSenderAdapter adaptador = adaptador(brevo.url(), "clave-mala", "kudos@uco.net.co");
 
             EnvioFallidoException error = assertThrows(EnvioFallidoException.class,
-                    () -> adaptador.enviar("luis@uco.edu.co", "Asunto", "Cuerpo"));
+                    () -> adaptador.enviar("luis@uco.net.co", "Asunto", "Cuerpo"));
 
             assertEquals(1, error.intentos());
         }
@@ -82,7 +82,7 @@ class BrevoEmailSenderAdapterTest {
             BrevoEmailSenderAdapter adaptador = adaptador(brevo.url(), "", "");
 
             EnvioFallidoException error = assertThrows(EnvioFallidoException.class,
-                    () -> adaptador.enviar("luis@uco.edu.co", "Asunto", "Cuerpo"));
+                    () -> adaptador.enviar("luis@uco.net.co", "Asunto", "Cuerpo"));
 
             assertEquals(0, error.intentos());
             assertTrue(brevo.peticiones().isEmpty());

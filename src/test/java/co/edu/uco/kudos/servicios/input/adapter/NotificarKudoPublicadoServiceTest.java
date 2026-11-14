@@ -179,7 +179,7 @@ class NotificarKudoPublicadoServiceTest {
     }
 
     private static Persona persona(String nombres) {
-        return new Persona(UUID.randomUUID(), nombres, "Apellido", nombres.toLowerCase() + "@uco.edu.co",
+        return new Persona(UUID.randomUUID(), nombres, "Apellido", nombres.toLowerCase() + "@uco.net.co",
                 "+57300000000" + nombres.length(), EstadoCuenta.ACTIVA, Rol.ESTUDIANTE);
     }
 }

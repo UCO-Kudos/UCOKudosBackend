@@ -61,7 +61,7 @@ class KudoTest {
     }
 
     private static Persona persona(EstadoCuenta estado) {
-        return new Persona(UUID.randomUUID(), "Nombre", "Apellido", "correo@uco.edu.co",
+        return new Persona(UUID.randomUUID(), "Nombre", "Apellido", "correo@uco.net.co",
                 "+570000000000", estado, Rol.ESTUDIANTE);
     }
 }

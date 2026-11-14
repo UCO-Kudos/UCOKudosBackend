@@ -2,6 +2,7 @@ package co.edu.uco.kudos.servicios.input.adapter;
 
 import co.edu.uco.kudos.dominio.excepcion.CredencialesInvalidasException;
 import co.edu.uco.kudos.dominio.modelo.AccionAuditoria;
+import co.edu.uco.kudos.dominio.modelo.DominioInstitucional;
 import co.edu.uco.kudos.dominio.modelo.Persona;
 import co.edu.uco.kudos.dominio.modelo.RegistroAuditoria;
 import co.edu.uco.kudos.dominio.modelo.ResultadoAuditoria;
@@ -29,20 +30,32 @@ public class IniciarSesionService implements IniciarSesionUseCase {
     private final VerificadorClavePort verificadorClave;
     private final TokenServicePort tokens;
     private final AuditLogPort auditoria;
+    private final DominioInstitucional dominioInstitucional;
 
     public IniciarSesionService(PersonaRepositoryPort personas, VerificadorClavePort verificadorClave,
-                                TokenServicePort tokens, AuditLogPort auditoria) {
+                                TokenServicePort tokens, AuditLogPort auditoria,
+                                DominioInstitucional dominioInstitucional) {
         this.personas = personas;
         this.verificadorClave = verificadorClave;
         this.tokens = tokens;
         this.auditoria = auditoria;
+        this.dominioInstitucional = dominioInstitucional;
     }
 
     @Override
     public IniciarSesionResponse iniciarSesion(IniciarSesionCommand comando) {
         String traceId = comando.traceId();
-        Persona persona = personas.buscarPorCorreo(comando.correo().strip())
+        String correo = comando.correo().strip();
+        // Un correo de otro dominio no puede ser de nadie: se rechaza sin consultar la BD.
+        if (!dominioInstitucional.admite(correo)) {
+            throw registrarFallo(null, "correo no institucional", traceId);
+        }
+        Persona persona = personas.buscarPorCorreo(correo)
                 .orElseThrow(() -> registrarFallo(null, "correo no registrado", traceId));
+        // Defensa en profundidad: una fila con correo de otro dominio tampoco entra.
+        if (!dominioInstitucional.admite(persona)) {
+            throw registrarFallo(persona.id(), "correo no institucional", traceId);
+        }
         if (!persona.estaActiva()) {
             throw registrarFallo(persona.id(), "cuenta no activa", traceId);
         }

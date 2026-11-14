@@ -38,7 +38,7 @@ Cada paso: **Qué hace** (para sustentar) · **Prompt** · **Cómo verificar** �
 **Prompt:**
 > Implementa `IniciarSesionService` + `AuthController` (`POST /api/auth/login` con correo y clave; solo cuentas `ACTIVA`), emisión de JWT HS256 con `JwtEncoder` de Nimbus usando `JWT_SECRET` (claims: sub=personaId, rol, exp 60 min), `SecurityConfig` (stateless, `oauth2ResourceServer().jwt()`, público: login y `/actuator/health`; resto autenticado; `/api/auditoria` solo ADMIN), CORS con `CORS_ALLOWED_ORIGIN`, y `GET /api/categorias` y `GET /api/personas/destinatarios` (id y nombre de personas activas, excluyendo al usuario autenticado). Manejador global de errores `problem+json` con `traceId`. Filtro que genera `trace_id` por petición y lo pone en MDC y en el encabezado `X-Trace-Id`. Pruebas de login correcto/incorrecto. `mvn -B verify`. No hagas commit.
 
-**Verificar:** `curl -X POST .../api/auth/login` con `autor@uco-kudos.local` / `Kudos2026*` devuelve token.  **Commit:** `feat(seguridad): login JWT, CORS, errores problem+json y trace_id`
+**Verificar:** `curl -X POST .../api/auth/login` con `autor@uco.net.co` / `Kudos2026*` devuelve token (un correo de otro dominio responde 401 "Credenciales inválidas").  **Commit:** `feat(seguridad): login JWT, CORS, errores problem+json y trace_id`
 
 ---
 

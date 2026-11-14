@@ -9,7 +9,7 @@ spring:
   flyway:
     # Valores reales del destinatario de la semilla V2 (no se publican en el repositorio)
     placeholders:
-      seed_dest_correo: ${SEED_DEST_CORREO:destinatario@example.com}
+      seed_dest_correo: ${SEED_DEST_CORREO:destinatario@uco.net.co}
       seed_dest_celular: ${SEED_DEST_CELULAR:+570000000003}
   servlet:
     multipart:
@@ -18,6 +18,8 @@ spring:
       max-request-size: 26MB
 
 kudos:
+  # Todas las personas usan correo institucional: el login rechaza cualquier otro dominio.
+  dominio-institucional: ${DOMINIO_INSTITUCIONAL:uco.net.co}
   jwt:
     secreto: ${JWT_SECRET}
     minutos-vigencia: 60
