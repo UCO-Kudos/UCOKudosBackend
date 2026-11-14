@@ -2,6 +2,9 @@ package co.edu.uco.kudos.servicios.output.port;
 
 public interface EmailSenderPort {
 
-    /** Lanza una excepción si el proveedor no acepta el correo. */
-    void enviar(String para, String asunto, String cuerpo);
+    /**
+     * @return cuántos intentos hicieron falta para que el proveedor aceptara el correo.
+     * Lanza EnvioFallidoException (con los intentos hechos) si no se pudo enviar.
+     */
+    int enviar(String para, String asunto, String cuerpo);
 }

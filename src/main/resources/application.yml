@@ -27,6 +27,52 @@ kudos:
     url: ${SUPABASE_URL}
     clave-servicio: ${SUPABASE_SERVICE_KEY}
     bucket: ${SUPABASE_BUCKET:kudos-adjuntos}
+  # Correo y WhatsApp son opcionales: si falta una credencial la aplicación arranca igual
+  # y ese canal queda FALLIDA en notificacion y auditoria (sin tocar el Kudo ni los otros canales).
+  brevo:
+    url: https://api.brevo.com
+    api-key: ${BREVO_API_KEY:}
+    remitente: ${MAIL_FROM:}
+  twilio:
+    url: https://api.twilio.com
+    account-sid: ${TWILIO_ACCOUNT_SID:}
+    auth-token: ${TWILIO_AUTH_TOKEN:}
+    whatsapp-from: ${TWILIO_WHATSAPP_FROM:}
+
+# Reintento y circuit breaker de los canales "correo" y "whatsapp" (los usa LlamadaResiliente).
+resilience4j:
+  retry:
+    configs:
+      default:
+        max-attempts: 3                     # EC-05: como máximo 3 intentos
+        wait-duration: 500ms
+        enable-exponential-backoff: true    # 500 ms, luego 1 s
+        exponential-backoff-multiplier: 2
+        # Solo se reintenta lo que puede ser pasajero: 5xx y fallas de red/timeout. Un 4xx no mejora reintentando.
+        retry-exceptions:
+          - org.springframework.web.client.HttpServerErrorException
+          - org.springframework.web.client.ResourceAccessException
+    instances:
+      correo:
+        base-config: default
+      whatsapp:
+        base-config: default
+  circuitbreaker:
+    configs:
+      default:
+        sliding-window-size: 10
+        minimum-number-of-calls: 5
+        failure-rate-threshold: 50          # abre si falla la mitad de las últimas llamadas
+        wait-duration-in-open-state: 30s
+        permitted-number-of-calls-in-half-open-state: 2
+        record-exceptions:
+          - org.springframework.web.client.HttpServerErrorException
+          - org.springframework.web.client.ResourceAccessException
+    instances:
+      correo:
+        base-config: default
+      whatsapp:
+        base-config: default
 
 server:
   port: ${PORT:8080}
@@ -36,7 +82,8 @@ management:
   endpoints:
     web:
       exposure:
-        include: health
+        # health es público; metrics exige rol ADMIN (SeguridadConfig)
+        include: health,metrics
 
 # Logs en JSON (formato ECS) a stdout; incluyen el MDC (traceId)
 logging:

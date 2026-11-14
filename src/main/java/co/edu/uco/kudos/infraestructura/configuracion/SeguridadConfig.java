@@ -1,6 +1,7 @@
 package co.edu.uco.kudos.infraestructura.configuracion;
 
 import co.edu.uco.kudos.infraestructura.output.adapter.seguridad.JwtTokenAdapter;
+import jakarta.servlet.DispatcherType;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import javax.crypto.SecretKey;
@@ -29,7 +30,8 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 /**
  * Seguridad sin estado: cada petición trae su JWT (Bearer) y no hay sesión en el servidor.
- * Denegar por defecto: solo el login y /actuator/health son públicos.
+ * Denegar por defecto: solo el login y /actuator/health son públicos; /actuator/metrics y
+ * /api/auditoria exigen rol ADMIN.
  */
 @Configuration
 public class SeguridadConfig {
@@ -44,9 +46,13 @@ public class SeguridadConfig {
                 .cors(Customizer.withDefaults())
                 .sessionManagement(sesion -> sesion.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(rutas -> rutas
+                        // El cierre de una conexión SSE vuelve a pasar por los filtros como despacho ASYNC;
+                        // esa conexión ya se autorizó con su JWT al abrirse.
+                        .dispatcherTypeMatchers(DispatcherType.ASYNC).permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
                         .requestMatchers("/actuator/health", "/actuator/health/**", "/error").permitAll()
-                        .requestMatchers("/api/auditoria/**").hasRole("ADMIN")
+                        .requestMatchers("/actuator/**").hasRole("ADMIN")
+                        .requestMatchers("/api/auditoria", "/api/auditoria/**").hasRole("ADMIN")
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(servidor -> servidor
                         .jwt(jwt -> jwt.jwtAuthenticationConverter(convertidorDeRoles()))
