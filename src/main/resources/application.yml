@@ -40,6 +40,8 @@ kudos:
     account-sid: ${TWILIO_ACCOUNT_SID:}
     auth-token: ${TWILIO_AUTH_TOKEN:}
     whatsapp-from: ${TWILIO_WHATSAPP_FROM:}
+    # Opcional: SID de la plantilla (HX...). Si está, se envía ContentSid en vez de Body.
+    content-sid: ${TWILIO_CONTENT_SID:}
 
 # Reintento y circuit breaker de los canales "correo" y "whatsapp" (los usa LlamadaResiliente).
 resilience4j:

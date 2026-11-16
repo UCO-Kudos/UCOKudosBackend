@@ -21,6 +21,7 @@ import org.springframework.web.client.RestClient;
 /**
  * Envía el WhatsApp con la API REST de Twilio (sandbox), sin SDK:
  * POST /2010-04-01/Accounts/{SID}/Messages.json, formulario From/To/Body y autenticación básica SID:token.
+ * Si hay plantilla (TWILIO_CONTENT_SID) se envía From/To/ContentSid sin Body: Twilio arma el texto con la plantilla.
  * Si faltan las credenciales la aplicación arranca igual: cada envío queda FALLIDA con 0 intentos.
  */
 @Component
@@ -33,6 +34,7 @@ public class TwilioWhatsAppSenderAdapter implements WhatsAppSenderPort {
     private final String accountSid;
     private final String authToken;
     private final String remitente;
+    private final String contentSid;
     private final Retry reintento;
     private final CircuitBreaker circuito;
 
@@ -40,6 +42,7 @@ public class TwilioWhatsAppSenderAdapter implements WhatsAppSenderPort {
                                        @Value("${kudos.twilio.account-sid}") String accountSid,
                                        @Value("${kudos.twilio.auth-token}") String authToken,
                                        @Value("${kudos.twilio.whatsapp-from}") String remitente,
+                                       @Value("${kudos.twilio.content-sid}") String contentSid,
                                        RetryRegistry reintentos, CircuitBreakerRegistry circuitos) {
         SimpleClientHttpRequestFactory fabrica = new SimpleClientHttpRequestFactory();
         fabrica.setConnectTimeout(Duration.ofSeconds(5));
@@ -50,6 +53,7 @@ public class TwilioWhatsAppSenderAdapter implements WhatsAppSenderPort {
         this.authToken = authToken;
         // Se acepta TWILIO_WHATSAPP_FROM con o sin el prefijo "whatsapp:".
         this.remitente = remitente.isBlank() || remitente.startsWith(PREFIJO) ? remitente : PREFIJO + remitente;
+        this.contentSid = contentSid;
         this.reintento = reintentos.retry("whatsapp");
         this.circuito = circuitos.circuitBreaker("whatsapp");
         if (!configurado()) {
@@ -66,7 +70,12 @@ public class TwilioWhatsAppSenderAdapter implements WhatsAppSenderPort {
         MultiValueMap<String, String> formulario = new LinkedMultiValueMap<>();
         formulario.add("From", remitente);
         formulario.add("To", PREFIJO + celular);
-        formulario.add("Body", mensaje);
+        if (contentSid.isBlank()) {
+            formulario.add("Body", mensaje);
+        } else {
+            // Con plantilla no va Body: el texto lo define la plantilla aprobada en Twilio.
+            formulario.add("ContentSid", contentSid);
+        }
         return LlamadaResiliente.ejecutar("Twilio", reintento, circuito, () -> restClient.post()
                 .uri("/2010-04-01/Accounts/{sid}/Messages.json", accountSid)
                 .headers(cabeceras -> cabeceras.setBasicAuth(accountSid, authToken))

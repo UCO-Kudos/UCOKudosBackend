@@ -1,6 +1,7 @@
 package co.edu.uco.kudos.infraestructura.output.adapter.whatsapp;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -15,9 +16,9 @@ import org.junit.jupiter.api.Test;
 class TwilioWhatsAppSenderAdapterTest {
 
     @Test
-    void enviaFormularioConAutenticacionBasicaAlEndpointDeLaCuenta() {
+    void sinContentSidEnviaFormularioConBodyYAutenticacionBasicaAlEndpointDeLaCuenta() {
         try (ServidorHttpFalso twilio = new ServidorHttpFalso(201)) {
-            int intentos = adaptador(twilio.url(), "AC123", "token-prueba", "+14155238886")
+            int intentos = adaptador(twilio.url(), "AC123", "token-prueba", "+14155238886", "")
                     .enviar("+573001234567", "Hola Luis");
 
             assertEquals(1, intentos);
@@ -28,13 +29,30 @@ class TwilioWhatsAppSenderAdapterTest {
             assertTrue(peticion.contentType().startsWith("application/x-www-form-urlencoded"));
             assertTrue(peticion.cuerpo().contains("From=whatsapp%3A%2B14155238886"), peticion.cuerpo());
             assertTrue(peticion.cuerpo().contains("To=whatsapp%3A%2B573001234567"), peticion.cuerpo());
+            assertTrue(peticion.cuerpo().contains("Body=Hola"), peticion.cuerpo());
+            assertFalse(peticion.cuerpo().contains("ContentSid="), peticion.cuerpo());
+        }
+    }
+
+    @Test
+    void conContentSidEnviaLaPlantillaSinBody() {
+        try (ServidorHttpFalso twilio = new ServidorHttpFalso(201)) {
+            int intentos = adaptador(twilio.url(), "AC123", "token-prueba", "+14155238886", "HX123")
+                    .enviar("+573001234567", "Hola Luis");
+
+            assertEquals(1, intentos);
+            String cuerpo = twilio.peticiones().getFirst().cuerpo();
+            assertTrue(cuerpo.contains("From=whatsapp%3A%2B14155238886"), cuerpo);
+            assertTrue(cuerpo.contains("To=whatsapp%3A%2B573001234567"), cuerpo);
+            assertTrue(cuerpo.contains("ContentSid=HX123"), cuerpo);
+            assertFalse(cuerpo.contains("Body="), cuerpo);
         }
     }
 
     @Test
     void sinCredencialesNoLlamaATwilioYFallaConCeroIntentos() {
         try (ServidorHttpFalso twilio = new ServidorHttpFalso(201)) {
-            TwilioWhatsAppSenderAdapter adaptador = adaptador(twilio.url(), "", "", "");
+            TwilioWhatsAppSenderAdapter adaptador = adaptador(twilio.url(), "", "", "", "");
 
             EnvioFallidoException error = assertThrows(EnvioFallidoException.class,
                     () -> adaptador.enviar("+573001234567", "Hola"));
@@ -44,8 +62,9 @@ class TwilioWhatsAppSenderAdapterTest {
         }
     }
 
-    private static TwilioWhatsAppSenderAdapter adaptador(String url, String sid, String token, String remitente) {
-        return new TwilioWhatsAppSenderAdapter(url, sid, token, remitente, RetryRegistry.ofDefaults(),
+    private static TwilioWhatsAppSenderAdapter adaptador(String url, String sid, String token, String remitente,
+                                                         String contentSid) {
+        return new TwilioWhatsAppSenderAdapter(url, sid, token, remitente, contentSid, RetryRegistry.ofDefaults(),
                 CircuitBreakerRegistry.ofDefaults());
     }
 }
