@@ -22,6 +22,7 @@
         <resilience4j.version>2.4.0</resilience4j.version>
         <archunit.version>1.5.1</archunit.version>
         <jacoco.version>0.8.16</jacoco.version>
+        <tomcat.version>11.0.25</tomcat.version>
     </properties>
 
     <dependencies>
