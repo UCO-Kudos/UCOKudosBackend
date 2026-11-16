@@ -2,9 +2,14 @@ package co.edu.uco.kudos.infraestructura.output.adapter.persistencia;
 
 import co.edu.uco.kudos.dominio.modelo.Adjunto;
 import co.edu.uco.kudos.dominio.modelo.Kudo;
+import co.edu.uco.kudos.dominio.modelo.KudoDetalle;
 import co.edu.uco.kudos.servicios.output.port.KudoRepositoryPort;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
+import java.util.UUID;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
 
@@ -38,6 +43,38 @@ public class KudoJdbcRepository implements KudoRepositoryPort {
         for (Adjunto adjunto : adjuntos) {
             guardarAdjunto(kudo, adjunto);
         }
+    }
+
+    @Override
+    public List<KudoDetalle> listarDePersona(UUID personaId) {
+        return jdbcClient.sql("""
+                        SELECT c.id, c.autor_id, a.nombres || ' ' || a.apellidos AS autor_nombre,
+                               c.destinatario_id, d.nombres || ' ' || d.apellidos AS destinatario_nombre,
+                               cat.nombre AS categoria, c.texto, c.creado_en
+                        FROM contenido c
+                        JOIN persona a ON a.id = c.autor_id
+                        JOIN persona d ON d.id = c.destinatario_id
+                        JOIN categoria cat ON cat.id = c.categoria_id
+                        WHERE c.tipo = 'KUDO' AND c.estado = 'ACTIVO'
+                          AND (c.autor_id = :personaId OR c.destinatario_id = :personaId)
+                        ORDER BY c.creado_en DESC
+                        LIMIT 50
+                        """)
+                .param("personaId", personaId)
+                .query(this::mapearDetalle)
+                .list();
+    }
+
+    private KudoDetalle mapearDetalle(ResultSet fila, int numeroFila) throws SQLException {
+        return new KudoDetalle(
+                fila.getObject("id", UUID.class),
+                fila.getObject("autor_id", UUID.class),
+                fila.getString("autor_nombre"),
+                fila.getObject("destinatario_id", UUID.class),
+                fila.getString("destinatario_nombre"),
+                fila.getString("categoria"),
+                fila.getString("texto"),
+                fila.getObject("creado_en", OffsetDateTime.class).toInstant());
     }
 
     private void guardarAdjunto(Kudo kudo, Adjunto adjunto) {
